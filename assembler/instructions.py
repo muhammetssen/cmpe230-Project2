@@ -44,7 +44,7 @@ def getAddressType(operandType):
     if '[' in operandType: # We are checking an address
         inside = operandType[1:-1]
         if "'" in inside:
-            return 3
+            return 3 
         if inside in registers.keys():
             return 2
         return 3

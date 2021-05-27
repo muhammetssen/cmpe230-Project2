@@ -1,4 +1,4 @@
-from cpu230 import Cpu230
+import cpu230  
 import constants
 
 
@@ -9,7 +9,7 @@ def GNUToBinary(GNU):
     return opcode, addressing_mode, operand
 
 
-def getValue(cpu, address_mode, operand):
+def getValue(cpu:cpu230.Cpu230, address_mode, operand):
     if address_mode == 0:  # Immediate data
         return int(operand, 16)
     if address_mode == 1:  # Register
@@ -23,7 +23,7 @@ def getValue(cpu, address_mode, operand):
         return cpu.readFromMemory(int(operand))
 
 
-def setValue(cpu: Cpu230, address_mode, operand, value: int):
+def setValue(cpu: cpu230.Cpu230, address_mode, operand, value: int):
     if address_mode == 1:  # Register
         registerName = constants.registersCodes[operand]
         cpu.registers[registerName] = value
@@ -64,7 +64,7 @@ def STORE(cpu, address_mode, operand, **kwargs):
     return False
 
 
-def ADD(cpu: Cpu230, address_mode, operand, **kwargs):
+def ADD(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("ADD Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -81,7 +81,7 @@ def ADD(cpu: Cpu230, address_mode, operand, **kwargs):
     cpu.registers['A'] = int(result, 2)
 
 
-def SUB(cpu: Cpu230, address_mode, operand, **kwargs):
+def SUB(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("SUB Function")
     # What about immediate data
     NOT(cpu, address_mode, operand)
@@ -99,7 +99,7 @@ def INC(cpu, address_mode, operand, **kwargs):
     setValue(cpu, address_mode, operand, result)
 
 
-def DEC(cpu: Cpu230, address_mode, operand, **kwargs):
+def DEC(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("DEC Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -108,7 +108,7 @@ def DEC(cpu: Cpu230, address_mode, operand, **kwargs):
     setValue(cpu, address_mode, operand, result)
 
 
-def XOR(cpu: Cpu230, address_mode, operand, **kwargs):
+def XOR(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("XOR Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -138,7 +138,7 @@ def OR(cpu, address_mode, operand, **kwargs):
     cpu.registers['A'] = result
 
 
-def NOT(cpu: Cpu230, address_mode, operand, **kwargs):
+def NOT(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("NOT Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -170,21 +170,21 @@ def NOP(cpu, address_mode, operand, **kwargs):
     pass
 
 
-def PUSH(cpu: Cpu230, address_mode, operand, **kwargs):
+def PUSH(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("PUSH Function")
 
     value = getValue(cpu, address_mode, operand)
     cpu.writeToMemory(value)
 
 
-def POP(cpu: Cpu230, address_mode, operand, **kwargs):
+def POP(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("POP Function")
 
     popped = cpu.popFromStack()
     setValue(cpu, address_mode, operand, popped)
 
 
-def CMP(cpu: Cpu230, address_mode, operand, **kwargs):
+def CMP(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("CMP Function")
 
     regABackup = cpu.registers['A']
@@ -192,7 +192,7 @@ def CMP(cpu: Cpu230, address_mode, operand, **kwargs):
     cpu.registers['A'] = regABackup
 
 
-def JMP(cpu: Cpu230, address_mode, operand, **kwargs):
+def JMP(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JMP Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -200,7 +200,7 @@ def JMP(cpu: Cpu230, address_mode, operand, **kwargs):
     cpu.registers['JF'] = True
 
 
-def JZ(cpu: Cpu230, address_mode, operand, **kwargs):
+def JZ(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JZ Function")
     value = getValue(cpu, address_mode, operand)
     if(cpu.flags['ZF']):
@@ -208,7 +208,7 @@ def JZ(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['JF'] = True
 
 
-def JNZ(cpu: Cpu230, address_mode, operand, **kwargs):
+def JNZ(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JNZ Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -217,7 +217,7 @@ def JNZ(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['JF'] = True
 
 
-def JC(cpu: Cpu230, address_mode, operand, **kwargs):
+def JC(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JC Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -226,7 +226,7 @@ def JC(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['JF'] = True
 
 
-def JNC(cpu: Cpu230, address_mode, operand, **kwargs):
+def JNC(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JNC Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -235,7 +235,7 @@ def JNC(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['JF'] = True
 
 
-def JA(cpu: Cpu230, address_mode, operand, **kwargs):
+def JA(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JA Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -245,7 +245,7 @@ def JA(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['JF'] = True
 
 
-def JAE(cpu: Cpu230, address_mode, operand, **kwargs):
+def JAE(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JAE Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -255,7 +255,7 @@ def JAE(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['JF'] = True
 
 
-def JB(cpu: Cpu230, address_mode, operand, **kwargs):
+def JB(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JB Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -264,7 +264,7 @@ def JB(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['PC'] = value
         cpu.registers['JF'] = True 
 
-def JBE(cpu: Cpu230, address_mode, operand, **kwargs):
+def JBE(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("JBE Function")
 
     value = getValue(cpu, address_mode, operand)
@@ -273,14 +273,14 @@ def JBE(cpu: Cpu230, address_mode, operand, **kwargs):
         cpu.registers['PC'] = value
         cpu.registers['JF'] = True 
 
-def READ(cpu: Cpu230, address_mode, operand, **kwargs):
+def READ(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("READ Function")
 
     given = ord(input()) # int
     setValue(cpu,address_mode,operand,given)    
 
 
-def PRINT(cpu: Cpu230, address_mode, operand, **kwargs):
+def PRINT(cpu: cpu230.Cpu230, address_mode, operand, **kwargs):
     print("PRINT Function")
     value = getValue(cpu, address_mode, operand)
     print(chr(value))

@@ -1,4 +1,5 @@
-import functions
+# import functions
+import constants
 
 
 class Cpu230:
@@ -35,7 +36,7 @@ class Cpu230:
         CHUNK_SIZE = 8
         a = format(value, "08b")
         b = "0" * (CHUNK_SIZE - len(a) % CHUNK_SIZE) + a
-        for i in range(len(b) / CHUNK_SIZE):
+        for i in range(len(b) // CHUNK_SIZE):
             # TODO check for stackoverflow
             if(index):
                 self.memory[index] = b[i*CHUNK_SIZE:(i+1)*CHUNK_SIZE]
@@ -54,7 +55,7 @@ class Cpu230:
             r += self.memory[self.registers['S']]
             self.memory[self.registers['S']] = None
             self.registers['S'] -= 1
-        return int(r,2)
+        return int(r, 2)
 
     def updateFlags(self, value: int, SF=False, ZF=False, CF=False):
         result = bin(value)[2:]
@@ -67,7 +68,7 @@ class Cpu230:
             self.flags['SF'] = result[0] == '1'
         if ZF:
             self.flags['ZF'] = int(result, 2) == 0
-        return result
+        return int(result, 2)
 
     def run(self):
         while True:
@@ -76,12 +77,276 @@ class Cpu230:
             currentInstruction = self.memory[self.registers["PC"]] + \
                 self.memory[self.registers["PC"] + 1] + \
                 self.memory[self.registers["PC"] + 2]
-            instructionDetails = functions.GNUToBinary(currentInstruction)
+            instructionDetails = GNUToBinary(currentInstruction)
             selectedFunction, address_mode, operand = instructionDetails
-            a = functions.functionCodes[selectedFunction](
+            a = functionCodes[selectedFunction](
                 self, address_mode, operand)
             if a:
-                print("HALT!")
+                # print("HALT!")
                 break
             if not self.flags['JF']:
                 self.registers['PC'] += 3
+
+
+def GNUToBinary(GNU):
+    opcode = hex(int(GNU[0:6], 2))[2:].upper()
+    addressing_mode = int(GNU[6:8], 2)
+    operand = hex(int(GNU[8:], 2))[2:].upper()
+    return opcode, addressing_mode, operand
+
+
+def getValue(cpu: Cpu230, address_mode, operand):
+    if address_mode == 0:  # Immediate data
+        return int(operand, 16)
+    if address_mode == 1:  # Register
+        registerName = constants.registersCodes[operand]
+        return cpu.registers[registerName]
+    if address_mode == 2:  # [A]
+        registerName = constants.registersCodes[operand]
+        return cpu.readFromMemory(cpu.registers[registerName])
+    if address_mode == 3:  # [00]
+        # return cpu.memory[int(operand)]
+        return cpu.readFromMemory(int(operand))
+
+
+def setValue(cpu: Cpu230, address_mode, operand, value: int):
+    if address_mode == 1:  # Register
+        registerName = constants.registersCodes[operand]
+        cpu.registers[registerName] = value
+        return
+    if address_mode == 2:
+        registerName = constants.registersCodes[operand]
+        cpu.writeToMemory(value, cpu.registers[registerName])
+        return
+    if address_mode == 3:
+        cpu.writeToMemory(value, int(operand))
+        return
+    print("Sorun var write to memoryde")
+
+
+def HALT(cpu, address_mode, operand, **kwargs):
+    return True
+
+
+def LOAD(cpu, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    cpu.registers['A'] = value
+
+
+def STORE(cpu, address_mode, operand, **kwargs):
+    # print("STORE Function")
+
+    if address_mode == 1:  # B
+        registerName = constants.registersCodes[operand]
+        cpu.registers[registerName] = cpu.registers['A']
+        return
+    if address_mode == 2:
+        registerName = constants.registersCodes[operand]
+        cpu.memory[cpu.registers[registerName]] = cpu.registers['A']
+        return
+    return False
+
+
+def ADD(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    regA = cpu.registers['A']
+    result = cpu.updateFlags(value+regA)
+    cpu.registers['A'] = int(result, 2)
+
+
+def SUB(cpu: Cpu230, address_mode, operand, **kwargs):
+    # What about immediate data
+    NOT(cpu, address_mode, operand)
+    ADD(cpu, address_mode, operand)
+    # value = getValue(cpu, address_mode, operand)
+    # result = bin(regA + value)[2:]
+
+
+def INC(cpu, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    result = value + 1
+    result = cpu.updateFlags(result, CF=True, SF=True, ZF=True)
+    setValue(cpu, address_mode, operand, result)
+
+
+def DEC(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    result = value - 1
+    result = cpu.updateFlags(result, CF=True, SF=True, ZF=True)
+    setValue(cpu, address_mode, operand, result)
+
+
+def XOR(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    regA = cpu.registers['A']
+    result = value ^ regA
+    result = cpu.updateFlags(result, SF=True, ZF=True)
+    cpu.registers['A'] = result
+
+
+def AND(cpu, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    regA = cpu.registers['A']
+    result = value & regA
+    result = cpu.updateFlags(result, SF=True, ZF=True)
+    cpu.registers['A'] = result
+
+
+def OR(cpu, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    regA = cpu.registers['A']
+    result = value | regA
+    result = cpu.updateFlags(result, SF=True, ZF=True)
+    cpu.registers['A'] = result
+
+
+def NOT(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    compl = twosComplement(value)
+    cpu.flags['ZF'] = compl == 0
+    cpu.flags['SF'] = bin(compl)[3] == '1'
+
+
+def SHL(cpu, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    result = value << 1
+    result = cpu.updateFlags(result, CF=True, SF=True, ZF=True)
+    setValue(cpu, address_mode, operand, result)
+
+
+def SHR(cpu, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    result = value >> 1
+    result = cpu.updateFlags(result, SF=True, ZF=True)
+    setValue(cpu, address_mode, operand, result)
+
+
+def NOP(cpu, address_mode, operand, **kwargs):
+    pass
+
+
+def PUSH(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    cpu.writeToMemory(value)
+
+
+def POP(cpu: Cpu230, address_mode, operand, **kwargs):
+    popped = cpu.popFromStack()
+    setValue(cpu, address_mode, operand, popped)
+
+
+def CMP(cpu: Cpu230, address_mode, operand, **kwargs):
+    regABackup = cpu.registers['A']
+    SUB(cpu, address_mode, operand)
+    cpu.registers['A'] = regABackup
+
+
+def JMP(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    cpu.registers['PC'] = value
+    cpu.flags['JF'] = True
+
+
+def JZ(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    if(cpu.flags['ZF']):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def JNZ(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    if(not cpu.flags['ZF']):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def JC(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    if(cpu.flags['CF']):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def JNC(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    if(not cpu.flags['CF']):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def JA(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    CMP(cpu, address_mode, operand)
+    if((cpu.flags['SF'] and cpu.flags['CF'])):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def JAE(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    CMP(cpu, address_mode, operand)
+    if((cpu.flags['SF'] and cpu.flags['CF']) or cpu.flags['ZF']):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def JB(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    CMP(cpu, address_mode, operand)
+    if((not cpu.flags['SF'] and not cpu.flags['CF'])):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def JBE(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    CMP(cpu, address_mode, operand)
+    if((not cpu.flags['SF'] and not cpu.flags['CF']) or cpu.flags['ZF']):
+        cpu.registers['PC'] = value
+        cpu.flags['JF'] = True
+
+
+def READ(cpu: Cpu230, address_mode, operand, **kwargs):
+    given = ord(input())  # int
+    setValue(cpu, address_mode, operand, given)
+
+
+def PRINT(cpu: Cpu230, address_mode, operand, **kwargs):
+    value = getValue(cpu, address_mode, operand)
+    print(chr(value), end=f"\t\tFor the  decimal ascii {value}\n")
+
+
+def twosComplement(givenNum: int) -> int:
+    return ~givenNum + 1
+
+
+functionCodes = {}
+functionCodes['1'] = HALT
+functionCodes['2'] = LOAD
+functionCodes['3'] = STORE
+functionCodes['4'] = ADD
+functionCodes['5'] = SUB
+functionCodes['6'] = INC
+functionCodes['7'] = DEC
+functionCodes['8'] = XOR
+functionCodes['9'] = AND
+functionCodes['A'] = OR
+functionCodes['B'] = NOT
+functionCodes['C'] = SHL
+functionCodes['D'] = SHR
+functionCodes['E'] = NOP
+functionCodes['F'] = PUSH
+functionCodes['10'] = POP
+functionCodes['11'] = CMP
+functionCodes['12'] = JMP
+functionCodes['13'] = JZ
+functionCodes['14'] = JNZ
+functionCodes['15'] = JC
+functionCodes['16'] = JNC
+functionCodes['17'] = JA
+functionCodes['18'] = JAE
+functionCodes['19'] = JB
+functionCodes['1A'] = JBE
+functionCodes['1B'] = READ
+functionCodes['1C'] = PRINT

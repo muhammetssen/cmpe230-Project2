@@ -12,7 +12,7 @@ def calculateImmediate(operand):
 outputs = []
 
 file = open("prog.asm", "r")
-inputLines = [line.strip() for line in file.readlines()]
+inputLines = [line.strip() for line in file.readlines() if line.strip() != '']
 file.close()
 
 count = 0
@@ -23,6 +23,7 @@ for line in inputLines:
         count+=1
 
 for line in inputLines:
+    print(line)
     if line[-1] == ":":
         continue
     if line == "HALT":

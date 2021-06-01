@@ -41,17 +41,17 @@ registers = {
 }
 
 def getAddressType(operandType):
-    if '[' in operandType: # We are checking an address
-        inside = operandType[1:-1]
-        if "'" in inside:
+    if '[' in operandType: # We are checking whether operandType is an address or not
+        inside = operandType[1:-1] # If an address, only take the inside 
+        if "'" in inside: # Ascii character, e.g. ['A']
             return 3 
-        if inside in registers.keys():
+        if inside in registers.keys(): # [Register]
             return 2
         return 3
-    if "'" in operandType:
+    if "'" in operandType: # 'A'
         return 0
-    if operandType in registers.keys():
+    if operandType in registers.keys(): # PC
         return 1
-    return 0
+    return 0 # Immediate
       
 

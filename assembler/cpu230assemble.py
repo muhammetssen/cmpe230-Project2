@@ -29,6 +29,10 @@ for line in inputLines:
     if line == "HALT":
         outputs.append("040000" + "\n")
         continue
+    if line == "NOP":
+        outputs.append("380000" + "\n")
+        continue
+    
     tokens = line.split()
     operator = tokens[0]
     codeType = codes[operator]

@@ -51,16 +51,18 @@ class Cpu230:
 
     def popFromStack(self) -> int:
         r = ""
+        poppedaddress = self.registers['S'] + 2
         for i in range(2):
-            r += self.memory[self.registers['S']]
+            r += self.memory[ poppedaddress]
             self.memory[self.registers['S']] = None
-            self.registers['S'] -= 1
+            poppedaddress-=1
+        self.registers['S']+=2
         return int(r, 2)
 
     def updateFlags(self, value: int, SF=False, ZF=False, CF=False):
         result = bin(value)[2:]
         if(CF and len(result) > 16):
-            self.flags['CF'] = True
+            self.flags['CF'] = Truef
             result = result[-16]
         else:
             self.flags['CF'] = False
@@ -133,7 +135,7 @@ def LOAD(cpu, address_mode, operand, **kwargs):
     cpu.registers['A'] = value
 
 
-def STORE(cpu, address_mode, operand, **kwargs):
+def STORE(cpu:Cpu230, address_mode, operand, **kwargs):
     # print("STORE Function")
 
     if address_mode == 1:  # B
@@ -142,23 +144,27 @@ def STORE(cpu, address_mode, operand, **kwargs):
         return
     if address_mode == 2:
         registerName = constants.registersCodes[operand]
-        cpu.memory[cpu.registers[registerName]] = cpu.registers['A']
+        cpu.writeToMemory(value=cpu.registers['A'],index=cpu.registers[registerName])
+        # cpu.memory[cpu.registers[registerName]] = cpu.registers['A']
         return
+    print("I knew you were trouble when you walked in")
     return False
-
+    
 
 def ADD(cpu: Cpu230, address_mode, operand, **kwargs):
     value = getValue(cpu, address_mode, operand)
     regA = cpu.registers['A']
     result = cpu.updateFlags(value+regA)
-    cpu.registers['A'] = int(result, 2)
+    cpu.registers['A'] = result
 
 
 def SUB(cpu: Cpu230, address_mode, operand, **kwargs):
     # What about immediate data
-    NOT(cpu, address_mode, operand)
-    ADD(cpu, address_mode, operand)
-    # value = getValue(cpu, address_mode, operand)
+    value = getValue(cpu, address_mode, operand)
+    inverseB = inverseBits(value)
+    inverse = int(inverseB,2) + 1
+
+    ADD(cpu, 0, hex(inverse)[2:])
     # result = bin(regA + value)[2:]
 
 
@@ -202,9 +208,10 @@ def OR(cpu, address_mode, operand, **kwargs):
 
 def NOT(cpu: Cpu230, address_mode, operand, **kwargs):
     value = getValue(cpu, address_mode, operand)
-    compl = twosComplement(value)
+    complBit = int(inverseBits(value),2)
     cpu.flags['ZF'] = compl == 0
     cpu.flags['SF'] = bin(compl)[3] == '1'
+    setValue(cpu, address_mode, operand,compl)
 
 
 def SHL(cpu, address_mode, operand, **kwargs):
@@ -317,8 +324,8 @@ def PRINT(cpu: Cpu230, address_mode, operand, **kwargs):
     print(chr(value), end=f"\t\tFor the  decimal ascii {value}\n")
 
 
-def twosComplement(givenNum: int) -> int:
-    return ~givenNum + 1
+def inverseBits(givenNum: int) -> str:
+    return "".join([ '1' if x == '0' else '0' for x in format(givenNum,'08b')])
 
 
 functionCodes = {}

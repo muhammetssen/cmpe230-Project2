@@ -12,7 +12,7 @@ def calculateImmediate(operand):
 
 outputs = [] # List of output binaries
 givenFile = argv[1] 
-outFile = givenFile.split('.')[0] + ".bin"
+outFile = givenFile.split('.')[0] + ".bin" 
 file = open(givenFile, "r")
 inputLines = [line.strip() for line in file.readlines() if line.strip() != '']
 file.close()

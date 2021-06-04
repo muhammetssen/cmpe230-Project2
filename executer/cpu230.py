@@ -18,6 +18,7 @@ class Cpu230:
         "S": 64 * 1024 - 1,  # Stack starts from end of the memory
         "PC": 0  # Instruction to read
     }
+    outputFilename: str
 
     memory = ['0' * 8] * 64 * 1024  # Memory is initialized with 0s.
 
@@ -36,7 +37,7 @@ class Cpu230:
         # Add zero(s) to start of the string if necessary
         b = "0" * (CHUNK_SIZE - len(a) % CHUNK_SIZE) + a
         for i in range(len(b) // CHUNK_SIZE):
-            if(index):  # If an index is given as a parameter
+            if(index):  # If an index was given as a parameter
                 self.memory[index] = b[i * CHUNK_SIZE: (i+1) * CHUNK_SIZE]
                 index -= 1
             else:
@@ -296,7 +297,9 @@ def READ(cpu: Cpu230, address_mode, operand):
 # Print the wanted value to terminal
 def PRINT(cpu: Cpu230, address_mode, operand):
     value = getValue(cpu, address_mode, operand)
-    print(chr(value))
+    # print(chr(value))
+    with open(cpu.outputFilename,"a") as f:
+        f.write(chr(value)+"\n")
 
 # Flip bits
 def inverseBits(givenNum: int) -> str:
